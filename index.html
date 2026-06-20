@@ -3,258 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RBLX Analytics & Update Predictor</title>
+    <title>Roblox Update Predictor</title>
+    <!-- Importing the Press Start 2P font from Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg-dark: #121214;
-            --card-dark: #1a1a1e;
-            --border-color: #2a2a30;
-            --text-main: #ffffff;
-            --text-muted: #a0a0ab;
-            --primary: #0070f3;
-            --success: #00e676;
-            --danger: #ff3366;
-        }
-
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
+            background-color: #000000;
+            color: #ffffff;
+            font-family: 'Press Start 2P', monospace;
             margin: 0;
-            padding: 40px 20px;
-        }
-
-        .dashboard {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 32px;
-        }
-
-        .header h1 { margin: 0 0 8px 0; font-size: 2rem; font-weight: 800; }
-        .header p { margin: 0; color: var(--text-muted); }
-
-        /* Top Metrics Row */
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 16px;
-            margin-bottom: 32px;
-        }
-
-        .metric-card {
-            background: var(--card-dark);
-            border: 1px solid var(--border-color);
-            padding: 20px;
-            border-radius: 12px;
-            text-align: center;
-        }
-
-        .metric-card h3 { margin: 0 0 8px 0; font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-        .metric-value { font-size: 1.8rem; font-weight: 700; }
-
-        /* Action Controls */
-        .controls {
+            height: 100vh;
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
+            justify-content: center;
             align-items: center;
-            margin-bottom: 16px;
-        }
-
-        button {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-        button:hover { opacity: 0.9; }
-
-        .btn-clear { background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); }
-        .btn-clear:hover { background: rgba(255, 51, 102, 0.1); color: var(--danger); border-color: var(--danger); }
-
-        /* History Table Container */
-        .history-panel {
-            background: var(--card-dark);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
+            text-align: center;
             overflow: hidden;
+            box-sizing: border-box;
+            padding: 20px;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
+        .question {
+            font-size: 24px;
+            line-height: 1.8;
+            margin-bottom: 60px;
+            max-width: 800px;
         }
 
-        th {
-            background: #222226;
-            padding: 16px;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
+        .prediction {
+            font-size: 72px;
+            font-weight: bold;
+            letter-spacing: 2px;
         }
 
-        td {
-            padding: 16px;
-            border-bottom: 1px solid var(--border-color);
-            font-size: 0.95rem;
+        .loading {
+            font-size: 16px;
+            color: #888888;
         }
 
-        tr:last-child td { border-bottom: none; }
-
-        /* Badges */
-        .badge {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            font-weight: 600;
+        .yes-green {
+            color: #00ff00;
         }
-        .badge-up { background: rgba(0, 230, 118, 0.15); color: var(--success); }
-        .badge-down { background: rgba(255, 51, 102, 0.15); color: var(--danger); }
-        
-        .indicator-good { color: var(--success); font-weight: 600; }
-        .indicator-bad { color: var(--danger); font-weight: 600; }
+
+        .no-red {
+            color: #ff0000;
+        }
     </style>
 </head>
 <body>
 
-<div class="dashboard">
-    <div class="header">
-        <h1>RBLX Update Predictive History</h1>
-        <p>Analyzing correlation between Roblox stock health and update quality</p>
+    <div class="question">
+        Is Roblox gonna have a Good Update tomorrow?
     </div>
 
-    <div class="metrics-grid">
-        <div class="metric-card">
-            <h3>Current Stock Status</h3>
-            <div class="metric-value id="liveStock" style="color: var(--danger);">-$3.42 (Down)</div>
-        </div>
-        <div class="metric-card">
-            <h3>Algorithm Accuracy</h3>
-            <div class="metric-value" style="color: var(--primary);">84.2%</div>
-        </div>
-        <div class="metric-card">
-            <h3>Updates Tracked</h3>
-            <div class="metric-value" id="totalCount">0</div>
-        </div>
+    <div id="outcome" class="loading">
+        FETCHING DATA...
     </div>
 
-    <div class="controls">
-        <button onclick="simulateNewUpdate()">Scan For Next Patch / Update</button>
-        <button class="btn-clear" onclick="clearLogs()">Wipe Analytics Cache</button>
-    </div>
+    <script>
+        async function checkRobloxStock() {
+            const outcomeDiv = document.getElementById('outcome');
+            try {
+                // Using a reliable open public API to grab daily ticker metrics
+                const response = await fetch('https://query1.finance.yahoo.com/v7/finance/options/RBLX');
+                const data = await response.json();
+                
+                // Pull out market pricing properties
+                const result = data.optionChain.result[0].quote;
+                const priceChange = result.regularMarketChange;
 
-    <div class="history-panel">
-        <table>
-            <thead>
-                <tr>
-                    <th>Timestamp</th>
-                    <th>RBLX Performance</th>
-                    <th>Update Patch No.</th>
-                    <th>Core Prediction Outcome</th>
-                </tr>
-            </thead>
-            <tbody id="historyRows">
-                </tbody>
-        </table>
-    </div>
-</div>
-
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        renderLogs();
-        updateLiveDashboardCard();
-    });
-
-    // Simulates an automated scanning algorithm evaluation
-    function simulateNewUpdate() {
-        const timestamp = new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        
-        // Randomly determine market health to calculate output correlation
-        const isStockDown = Math.random() > 0.45; 
-        const stockMovement = isStockDown ? "Down (-" + (Math.random() * 5 + 1).toFixed(2) + "%)" : "Up (+" + (Math.random() * 5 + 1).toFixed(2) + "%)";
-        
-        // Contextual rule: If the stock drops, it correlates to a "Bad Update" risk outcome 80% of the time.
-        let finalPrediction;
-        if (isStockDown) {
-            finalPrediction = Math.random() > 0.20 ? "⚠️ Bad Update Risk Detected" : "🟢 Good Update (Outlier)";
-        } else {
-            finalPrediction = Math.random() > 0.15 ? "🟢 Good Update Approved" : "⚠️ Bad Update (Market Disconnect)";
+                if (priceChange >= 0) {
+                    outcomeDiv.textContent = 'YES';
+                    outcomeDiv.className = 'prediction yes-green';
+                } else {
+                    outcomeDiv.textContent = 'NO';
+                    outcomeDiv.className = 'prediction no-red';
+                }
+            } catch (error) {
+                console.error('Error fetching stock data:', error);
+                // Fallback parsing option in case of request blocks/CORS restrictions
+                outcomeDiv.textContent = 'ERROR';
+                outcomeDiv.className = 'loading';
+            }
         }
 
-        const patchNumber = "v" + (Math.random() * 2 + 2).toFixed(1) + "." + Math.floor(Math.random() * 90 + 10);
-
-        const newLog = {
-            time: timestamp,
-            stock: stockMovement,
-            isDown: isStockDown,
-            patch: patchNumber,
-            outcome: finalPrediction
-        };
-
-        const existingLogs = JSON.parse(localStorage.getItem("rblx_dash_logs")) || [];
-        existingLogs.unshift(newLog);
-        localStorage.setItem("rblx_dash_logs", JSON.stringify(existingLogs));
-
-        renderLogs();
-        updateLiveDashboardCard();
-    }
-
-    function renderLogs() {
-        const rowsContainer = document.getElementById("historyRows");
-        const logs = JSON.parse(localStorage.getItem("rblx_dash_logs")) || [];
-        
-        document.getElementById("totalCount").textContent = logs.length;
-        rowsContainer.innerHTML = "";
-
-        if(logs.length === 0) {
-            rowsContainer.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 32px;">No historical items saved to storage index. Click above to scan.</td></tr>`;
-            return;
-        }
-
-        logs.forEach(log => {
-            const tr = document.createElement("tr");
-
-            // Format classes for rendering
-            const stockClass = log.isDown ? "badge badge-down" : "badge badge-up";
-            const outcomeClass = log.outcome.includes("Bad") ? "indicator-bad" : "indicator-good";
-
-            tr.innerHTML = `
-                <td style="color: var(--text-muted);">${log.time}</td>
-                <td><span class="${stockClass}">${log.stock}</span></td>
-                <td style="font-family: monospace; font-weight: bold;">${log.patch}</td>
-                <td class="${outcomeClass}">${log.outcome}</td>
-            `;
-            rowsContainer.appendChild(tr);
-        });
-    }
-
-    function updateLiveDashboardCard() {
-        const liveCard = document.getElementById("liveStock");
-        if(Math.random() > 0.5) {
-            liveCard.textContent = "Trending Up 📈";
-            liveCard.style.color = "var(--success)";
-        } else {
-            liveCard.textContent = "Trending Down 📉";
-            liveCard.style.color = "var(--danger)";
-        }
-    }
-
-    function clearLogs() {
-        if(confirm("Confirm resetting localized environment state?")) {
-            localStorage.removeItem("rblx_dash_logs");
-            renderLogs();
-        }
-    }
-</script>
+        // Run checking calculation immediately upon load state
+        checkRobloxStock();
+    </script>
 
 </body>
 </html>

@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Roblox Update Predictor</title>
-    <!-- Importing the Press Start 2P font from Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -41,14 +40,22 @@
         .loading {
             font-size: 16px;
             color: #888888;
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
 
         .yes-green {
             color: #00ff00;
+            text-shadow: 0 0 15px rgba(0, 255, 0, 0.4);
         }
 
         .no-red {
             color: #ff0000;
+            text-shadow: 0 0 15px rgba(255, 0, 0, 0.4);
         }
     </style>
 </head>
@@ -66,15 +73,25 @@
         async function checkRobloxStock() {
             const outcomeDiv = document.getElementById('outcome');
             try {
-                // Using a reliable open public API to grab daily ticker metrics
-                const response = await fetch('https://query1.finance.yahoo.com/v7/finance/options/RBLX');
+                // 1. The target Yahoo Finance URL
+                const targetUrl = 'https://query1.finance.yahoo.com/v8/finance/chart/RBLX';
+                
+                // 2. Wrap it in a public CORS proxy so the browser doesn't block it
+                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+
+                // 3. Fetch the data
+                const response = await fetch(proxyUrl);
+                if (!response.ok) throw new Error('Network response was not ok');
+                
                 const data = await response.json();
                 
-                // Pull out market pricing properties
-                const result = data.optionChain.result[0].quote;
-                const priceChange = result.regularMarketChange;
+                // 4. Extract the current price and the previous day's close price
+                const meta = data.chart.result[0].meta;
+                const currentPrice = meta.regularMarketPrice;
+                const previousClose = meta.previousClose;
 
-                if (priceChange >= 0) {
+                // 5. Calculate if it went up or down
+                if (currentPrice >= previousClose) {
                     outcomeDiv.textContent = 'YES';
                     outcomeDiv.className = 'prediction yes-green';
                 } else {
@@ -83,13 +100,13 @@
                 }
             } catch (error) {
                 console.error('Error fetching stock data:', error);
-                // Fallback parsing option in case of request blocks/CORS restrictions
                 outcomeDiv.textContent = 'ERROR';
-                outcomeDiv.className = 'loading';
+                outcomeDiv.className = 'prediction no-red';
+                outcomeDiv.style.fontSize = '32px'; 
             }
         }
 
-        // Run checking calculation immediately upon load state
+        // Run the script as soon as the page loads
         checkRobloxStock();
     </script>
 
